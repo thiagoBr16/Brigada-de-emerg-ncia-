@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <!-- Impede o zoom automático indesejado ao digitar e ajusta o layout ao celular -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Brigada de Emergência</title>
+    
+    <!-- Configurações para abrir em tela cheia no iPhone (iOS) e Android -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#e63946">
+
+    <!-- CONFIGURAÇÃO DO APLICATIVO INSTALÁVEL (JSON EMBUTIDO EM BASE64) -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJzaG9ydF9uYW1lIjogIkJyaWdhZGEiLAogICJuYW1lIjogIlNpc3RlbWEgQnJpZ2FkYSBkZSBFbWVyZ8OqbmNpYSIsCiAgInN0YXJ0X3VybCI6ICIuL2luZGV4Lmh0bWwiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxYTFhMWEiLAogICJ0aGVtZV9jb2xvciI6ICIjZTYzOTQ2IiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiCn0=">
+
+    <style>
+        /* Estilos Globais de Aplicativo Nativo */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Remove o reflexo azul ao tocar na tela mobile */
+            -webkit-tap-highlight-color: transparent;
+            /* Evita que o usuário selecione textos por acidente ao tocar rápido nos botões */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Container Principal: Funciona exatamente como a tela de um smartphone */
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            max-width: 480px;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Cabeçalho Fixo */
+        .app-header {
+            background-color: #242424;
+            padding: 18px;
+            text-align: center;
+            border-bottom: 3px solid #e63946;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            color: #e63946;
+            flex-shrink: 0;
+        }
+
+        /* Área de Conteúdo Central com Rolagem Isolada */
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px; /* Espaço de segurança para a barra de abas inferior */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Formulários e Elementos de Entrada */
+        .form-group {
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: #b3b3b3;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px;
+            background-color: #242424;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #e63946;
+            background-color: #2d2d2d;
+        }
+
+        /* Botões Estilo Mobile */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background-color: #e63946;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+            background-color: #c92a3a;
+        }
+
+        .login-links {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .login-links a {
+            color: #a8dadc;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Seleção de Especialidades (Cards de Rádio) */
+        .especialidades-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .card-radio {
+            position: relative;
+        }
+
+        .card-radio input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .specialty-card {
+            background-color: #242424;
+            border: 2px solid #333;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .card-radio input[type="radio"]:checked + .specialty-card {
+            border-color: #e63946;
+            background-color: rgba(230, 57, 70, 0.15);
+            color: #e63946;
+        }
+
+        /* Linhas de Inspeção (Checklist) */
+        .checklist-item {
+            background-color: #242424;
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #333;
+        }
+
+        .checklist-item.verified {
+            border-left-color: #4caf50;
+        }
+
+        .item-info {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .status-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-btn {
+            padding: 8px 14px;
+            border: 1px solid #444;
+            background-color: #1a1a1a;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-btn.ok-active {
+            background-color: #2e7d32;
+            border-color: #4caf50;
+        }
+
+        .status-btn.not-ok-active {
+            background-color: #c62828;
+            border-color: #e53935;
+        }
+
+        /* Grid de Contadores de Fluxo */
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        /* Destaque para Ocorrência Crítica */
+        .label-alerta {
+            color: #ef4444 !important;
+        }
+        .field-alerta {
+            border-color: #5a2328 !important;
+            background-color: #251618 !important;
+        }
+
+        /* BARRA DE NAVEGAÇÃO INFERIOR DO APP */
+        .app-tabs {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background-color: #242424;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            gap: 4px;
+            flex: 1;
+            height: 100%;
+        }
+
+        .tab-item.active {
+            color: #e63946;
+        }
+
+        .tab-icon {
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Topo Fixo Dinâmico -->
+        <div class="app-header" id="main-header">🚒 BRIGADA OPERACIONAL</div>
+
+        <!-- Conteúdo Principal Dinâmico -->
+        <div class="app-content">
+
+            <!-- ================= TELA 1: CADASTRO DO DISPOSITIVO ================= -->
+            <div id="register-screen">
+                <h2 style="font-size:1.2rem; margin-bottom:20px; color:#fff;">Criar Conta do Operador</h2>
+                <form id="register-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="reg-email">E-mail Corporativo</label>
+                        <input type="email" id="reg-email" placeholder="nome@empresa.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Senha de Acesso</label>
+                        <input type="password" id="reg-password" placeholder="Mínimo 6 dígitos" required>
+                    </div>
+                    <button type="submit" class="btn">Cadastrar Dispositivo</button>
+                </form>
+                <div class="login-links" style="justify-content: center;">
+                    <a onclick="switchScreen('login-screen')">Já tem registro? Faça Login</a>
+                </div>
+            </div>
+
+            <!-- ================= TELA 2: LOGIN DO DISPOSITIVO ================= -->
+            <div id="login-screen" class="hidden">
+                <h2 style="font-size:1.2rem; margin-bottom:20px; color:#fff;">Acesso Protegido</h2>
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" placeholder="Insira seu e-mail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Senha</label>
+                        <input type="password" id="login-password" placeholder="Insira sua senha" required>
+                    </div>
+                    <button type="submit" class="btn">Entrar no App</button>
+                </form>
+                <div class="login-links">
+                    <a onclick="alert('Procure o administrador do sistema para resetar.')">Esqueceu a senha?</a>
+                    <a onclick="switchScreen('register-screen')">Novo cadastro</a>
+                </div>
+            </div>
+
+            <!-- ================= TELA 3: FORMULÁRIO OPERACIONAL ================= -->
+            <div id="checklist-screen" class="hidden">
+                <form action="https://formspree.io/f/xojbebrl" method="POST" id="checklist-form" onsubmit="handleSubmitChecklist(event)">
+                    
+                    <!-- ABAS OCULTAS QUE SÃO CONTROLADAS PELO MENU INFERIOR -->
+                    
+                    <!-- SUB-ABA 1: IDENTIFICAÇÃO -->
+                    <div id="sub-tab-identificacao">
+                        <div class="form-group">
+                            <label for="brigadista-name">Nome do Brigadista</label>
+                            <input type="text" id="brigadista-name" name="Nome do Brigadista" placeholder="Nome completo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="team-name">Equipe / Plantão</label>
+                            <input type="text" id="team-name" name="Equipe ou Plantão" placeholder="Ex: Bravo, Alfa..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Sua Especialidade</label>
+                            <div class="especialidades-grid">
+                                <label class="card-radio">
+                                    <input type="radio" name="Especialidade" value="Bombeiro" required>
+                                    <div class="specialty-card">🧑‍🚒 <span>Bombeiro</span></div>
+                                </label>
+                                <label class="card-radio">
+                                    <input type="radio" name="Especialidade" value="Enfermeiro">
+                                    <div class="specialty-card">🩺 <span>Enfermeiro</span></div>
+                                </label>
+                                <label class="card-radio">
+                                    <input type="radio" name="Especialidade" value="Brigadista">
+                                    <div class="specialty-card">🛡️ <span>Brigadista</span></div>
+                                </label>
+                                <label class="card-radio">
+                                    <input type="radio" name="Especialidade" value="SAMU Médico">
+                                    <div class="specialty-card">🚑 <span>SAMU</span></div>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn" style="margin-top:20px;" onclick="switchSubTab('inspecao')">Avançar para Inspeção ➡️</button>
+                    </div>
+
+                    <!-- SUB-ABA 2: INSPEÇÃO DE EQUIPAMENTOS -->
+                    <div id="sub-tab-inspecao" class="hidden">
+                        <div class="form-group">
+                            <label style="margin-bottom: 10px; display:block;">Checklist de Viaturas</label>
+                            
+                            <!-- Inputs ocultos para carregar as respostas no Formspree -->
+                            <input type="hidden" name="Status Extintor" id="hide-extintor">
+                            <input type="hidden" name="Status Cadeira de Rodas" id="hide-cadeira">
+                            <input type="hidden" name="Status Bolsa APH" id="hide-bolsa">
+                            <input type="hidden" name="Status Ventiladores" id="hide-ventilador">
+                            <input type="hidden" name="Status Rádios" id="hide-radios">
+
+                            <div class="checklist-item" id="item-extintor">
+                                <span class="item-info">🧯 Extintor</span>
+                                <div class="status-group">
+                                    <button type="button" class="status-btn" onclick="toggleStatus('extintor', true)">OK</button>
+                                    <button type="button" class="status-btn" onclick="toggleStatus('extintor', false)">NÃO</button>
+                                </div>
+                            </div>
+
+                            <div class="checklist-item" id="item-cadeira">
+                                <span class="item-info">🦽 Cadeira de Rodas</span>
+                                <div class="status-group">
+                                    <button type="button" class="status-btn" onclick="toggleStatus('cadeira', true)">OK</button>
+                                    <button type="button" class="status-btn" onclick="toggleStatus('cadeira', false)">NÃO</button>
+                                </div>
+                            </div>
+
+                            <div class="checklist-item" id="item-bolsa">
+                                <span class="item-info">🎒 Bolsa de APH</span>
+                                <div class="status-group">
+                                    <button type="button" class="status-btn" onclick="toggleStatus('bolsa', true)">OK</button>
+                                    <button type="button" class="status-btn" onclick="toggleStatus('bolsa', false)">NÃO</button>
+                                </div>
+                            </div>
+
+                            <div class="checklist-item" id="item-ventilador">
+                                <span class="item-info">💨 Ventiladores</span>
+                                <div class="status-group">
+                                    <button type="button" class="status-btn" onclick="toggleStatus('ventilador', true)">OK</button>
+                                    <button type="button" class="status-btn" onclick="toggleStatus('ventilador', false)">NÃO</button>
+                                </div>
+                            </div>
+                                
+                            <div class="checklist-item" id="item-radios">
+                                <span class="item-info">🗣📢 Rádios</span>
+                                <div class="status-group">
+                                    <button type="button" class="status-btn" onclick="toggleStatus('radios', true)">OK</button>
+                                    <button type="button" class="status-btn" onclick="toggleStatus('radios', false)">NÃO</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn" style="margin-top:10px;" onclick="switchSubTab('quantidades')">Avançar para Fluxo e Envio ➡️</button>
+                    </div>
+
+                    <!-- SUB-ABA 3: QUANTIDADES, OCORRÊNCIAS E TRANSMISSÃO -->
+                    <div id="sub-tab-quantidades" class="hidden">
+                        <label style="margin-bottom: 10px; display:block;">Controle de Fluxo Corrente</label>
+                        <div class="counters-grid">
+                            <div class="form-group">
+                                <label for="qty-people">👤 Pessoas</label>
+                                <input type="number" id="qty-people" name="Qtd Pessoas" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="qty-cars">🚗 Carros</label>
+                                <input type="number" id="qty-cars" name="Qtd Carros" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="qty-bikes">🚲 Bicicletas</label>
+                                <input type="number" id="qty-bikes" name="Qtd Bicicletas" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="qty-Motos">🏍️ Motos</label>
+                                <input type="number" id="qty-Motos" name="Qtd Motos" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <!-- CAMPO NOVO ADICIONADO: SELETOR CONDICIONAL DE ACIDENTES -->
+                        <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #333;">
+                            <label for="teveOcorrencia">Houve alguma ocorrência ou acidente com pessoas?</label>
+                            <select id="teveOcorrencia" name="Teve Ocorrência" onchange="toggleOcorrencia()">
+                                <option value="Não teve nenhuma ocorrência">Não teve nenhuma ocorrência</option>
+                                <option value="Sim, houve uma ocorrência">Sim, houve uma ocorrência</option>
+                            </select>
+                        </div>
+
+                        <!-- CAMPO NOVO ADICIONADO: TEXTAREA DE DESCRIÇÃO DA OCORRÊNCIA -->
+                        <div id="campoDescricao" class="form-group hidden">
+                            <label for="descricaoOcorrencia" class="label-alerta">Descreva o motivo/detalhes do acidente:</label>
+                            <textarea id="descricaoOcorrencia" name="Detalhes da Ocorrência" rows="4" class="field-alerta" placeholder="Forneça detalhes: Quem se acidentou, local, horário e as ações tomadas..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn" style="background-color: #4caf50; margin-top: 30px;">🚀 Transmitir Relatório</button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+
+        <!-- BARRA DE ABAS INFERIOR ESTILO APLICATIVO NATIVO (Visível após autenticação) -->
+        <div class="app-tabs hidden" id="app-navigation">
+            <div class="tab-item active" id="tab-id-btn" onclick="switchSubTab('identificacao')">
+                <span class="tab-icon">📋</span>
+                <span>Registro</span>
+            </div>
+            <div class="tab-item" id="tab-insp-btn" onclick="switchSubTab('inspecao')">
+                <span class="tab-icon">🧯</span>
+                <span>Inspeção</span>
+            </div>
+            <div class="tab-item" id="tab-qty-btn" onclick="switchSubTab('quantidades')">
+                <span class="tab-icon">📊</span>
+                <span>Fluxo/Envio</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts de Comportamento e Validação do Aplicativo -->
+    <script>
+        // Estrutura para validar se a inspeção de equipamentos foi feita
+        const checklistStatus = { extintor: null, cadeira: null, bolsa: null, ventilator: null, radios: null };
+
+        window.onload = function() {
+            // Se o operador já se registrou no aparelho anteriormente, pula o cadastro e vai para o login
+            if (localStorage.getItem('brigada_email')) {
+                switchScreen('login-screen');
+            }
+        };
+
+        // Gerenciador de transição entre Telas Principais (Fluxo de Segurança)
+        function switchScreen(screenId) {
+            document.getElementById('register-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('checklist-screen').classList.add('hidden');
+            
+            document.getElementById(screenId).classList.remove('hidden');
+
+            const nav = document.getElementById('app-navigation');
+            if (screenId === 'checklist-screen') {
+                nav.classList.remove('hidden');
+                document.getElementById('main-header').innerText = "📋 NOVO RELATÓRIO";
+            } else {
+                nav.classList.add('hidden');
+                document.getElementById('main-header').innerText = "🚒 BRIGADA OPERACIONAL";
+            }
+        }
+
+        // Navegação por Abas Inferiores (Estilo Nativo Mobile)
+        function switchSubTab(subTabName) {
+            document.getElementById('sub-tab-identificacao').classList.add('hidden');
+            document.getElementById('sub-tab-inspecao').classList.add('hidden');
+            document.getElementById('sub-tab-quantidades').classList.add('hidden');
+
+            document.getElementById('tab-id-btn').classList.remove('active');
+            document.getElementById('tab-insp-btn').classList.remove('active');
+            document.getElementById('tab-qty-btn').classList.remove('active');
+
+            if (subTabName === 'identificacao') {
+                document.getElementById('sub-tab-identificacao').classList.remove('hidden');
+                document.getElementById('tab-id-btn').classList.add('active');
+            } else if (subTabName === 'inspecao') {
+                document.getElementById('sub-tab-inspecao').classList.remove('hidden');
+                document.getElementById('tab-insp-btn').classList.add('active');
+            } else if (subTabName === 'quantidades') {
+                document.getElementById('sub-tab-quantidades').classList.remove('hidden');
+                document.getElementById('tab-qty-btn').classList.add('active');
+            }
+        }
+
+        // Persistência interna para simular Contas Locais no dispositivo móvel
+        function handleRegister(event) {
+            event.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            localStorage.setItem('brigada_email', email);
+            localStorage.setItem('brigada_password', password);
+            
+            alert('Aparelho Registrado e Configurado com Sucesso!');
+            switchScreen('login-screen');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const savedEmail = localStorage.getItem('brigada_email');
+            const savedPassword = localStorage.getItem('brigada_password');
+
+            if (email === savedEmail && password === savedPassword && savedEmail !== null) {
+                switchScreen('checklist-screen');
+            } else {
+                alert('Acesso Negado: Credenciais incorretas ou dispositivo não verificado.');
+            }
+        }
+
+        // Seletor Inteligente de Botões de Checklist (Passa os dados para inputs invisíveis do Formspree)
+        function toggleStatus(item, isOk) {
+            const statusTexto = isOk ? "OK" : "NÃO OK";
+            checklistStatus[item] = statusTexto;
+            
+            // Grava o valor no input oculto correspondente para envio do Formspree
+            document.getElementById(`hide-${item}`).value = statusTexto;
+
+            const container = document.getElementById(`item-${item}`);
+            const buttons = container.getElementsByClassName('status-btn');
+            
+            buttons[0].classList.remove('ok-active');
+            buttons[1].classList.remove('not-ok-active');
+            container.classList.add('verified');
+
+            if (isOk) buttons[0].classList.add('ok-active');
+            else buttons[1].classList.add('not-ok-active');
+        }
+
+        // Controle Condicional Dinâmico do Bloco de Ocorrências e Acidentes
+        function toggleOcorrencia() {
+            const select = document.getElementById('teveOcorrencia');
+            const campoDescricao = document.getElementById('campoDescricao');
+            const descricaoOcorrencia = document.getElementById('descricaoOcorrencia');
+
+            if (select.value.indexOf('Sim') !== -1) {
+                campoDescricao.classList.remove('hidden');
+                descricaoOcorrencia.setAttribute('required', 'true');
+                descricaoOcorrencia.focus(); // Ativa e levanta automaticamente o teclado do celular
+            } else {
+                campoDescricao.classList.add('hidden');
+                descricaoOcorrencia.removeAttribute('required');
+                descricaoOcorrencia.value = ''; // Evita envio desnecessário de dados antigos
+            }
+        }
+
+        // Validação de segurança final antes do Formspree disparar o e-mail
+        function handleSubmitChecklist(event) {
+            // Valida se o operador ignorou a inspeção de equipamentos inteira
+            if (Object.values(checklistStatus).includes(null)) {
+                event.preventDefault(); // Trava a transmissão
+                alert('BLOQUEIO DE SEGURANÇA: Realize a inspeção de TODOS os itens na aba "Inspeção" antes de transmitir.');
+                switchSubTab('inspecao'); // Redireciona o usuário direto para onde falta preencher
+                return false;
+            }
+            
+            // Caso todos os campos obrigatórios e checagens passem, o Formspree processa o envio normalmente
+            alert('Transmitindo dados de turno para a central...');
+        }
+    </script>
+</body>
+</html>
+     
